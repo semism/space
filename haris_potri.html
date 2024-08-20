@@ -12,7 +12,16 @@
             padding-left: 5%;
             padding-right: 15%;
             font-family: Georgia, Garamond, 'EB Garamond', serif;
-            font-size: large;
+            font-size: 14pt;
+        }
+
+        button {
+            min-width: 90px;
+            min-height: 25px;
+            margin: 3px;
+            cursor: pointer;
+            background-color: rgb(244, 247, 248);
+            color: black;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -22,9 +31,8 @@
         }
     </style>
 </head>
-
-<body>
-    <button id="darkModeToggle">toggle lights💡</button>
+<header>
+    <button id="darkModeToggle">bon kall fajk 💡</button>
     <script>
         const button = document.getElementById('darkModeToggle');
         let darkMode = false;
@@ -35,14 +43,29 @@
 
             // set css variable
             root.style.setProperty('color-scheme', darkMode ? 'light' : 'dark');
-            document.body.classList.toggle('dark-mode', darkMode);
+        });
+    </script>
+
+    <button id="incrFontButton">zmadhoj shkronjat ➕</button>
+    <button id="decrFontButton">zvogloj shkronjat ➖</button>
+    <script>
+        let fontSize = 14;
+        document.getElementById('incrFontButton').addEventListener('click', () => {
+            fontSize += 2;
+            document.body.style.fontSize = fontSize + 'pt';
+        });
+        document.getElementById('decrFontButton').addEventListener('click', () => {
+            fontSize -= 2;
+            document.body.style.fontSize = fontSize + 'pt';
         });
     </script>
 
     <a href="index.html">
-        <button>home 🏠</button>
+        <button>shpaj 🏠</button>
     </a>
+</header>
 
+<body>
 
     <h1>
         Haris Potri
@@ -582,5 +605,19 @@
         t’dirigjaum pi juve, ndër hijen tuj. Falemnderit xhi ma kini mundsau. Nuk ua pranoj. Me respekt, dajxho, ngatma
         thauprën t’lutem”</p>
 </body>
+
+<footer>
+    <button id="scrollToTop">
+        hip termo 🔝
+    </button>
+
+    <script>
+        document.getElementById('scrollToTop').addEventListener('click', () => {
+            document.documentElement.scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    </script>
+</footer>
 
 </html>
