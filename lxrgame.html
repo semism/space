@@ -6,12 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Game Console</title>
     <style>
+        :root{
+            color-scheme: dark;
+        }
         body {
             font-family: monospace;
             background-color: #333;
             color: #eee;
             margin: 0;
             padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
         }
 
         #console {
@@ -20,6 +24,7 @@
             padding: 10px;
             border: 1px solid #666;
             background-color: #222;
+            box-sizing: border-box; /* Ensure padding and border are included in the width and height */
         }
 
         #input {
@@ -29,6 +34,7 @@
             background-color: #444;
             color: #eee;
             font-size: 1em;
+            box-sizing: border-box; /* Ensure padding is included in the width */
         }
 
         .player-input {
@@ -145,16 +151,13 @@
                     if ((i === 0 && arrangement[i + 1] === WRONG) ||
                         (i < arrangement.length - 1 && arrangement[i + 1] === WRONG)) {
                         newArrangement.push(RIGHT);
-                    } else{
+                    } else {
                         newArrangement.push(WRONG)
                     }
                 } else {
                     newArrangement.push(card);
                 }
             }
-            // if (newArrangement.length != arrangement.length) {
-            //     appendToConsole(`Made a right: <span class="info">${newArrangement.join(' ')}</span>`);
-            // }
             return newArrangement;
         }
 
@@ -170,7 +173,7 @@
                 appendToConsole("Enter your arrangement of 7 cards (e.g., '< < X > > <'):", "info");
                 document.getElementById('input').addEventListener('keydown', function handleEnter(event) {
                     if (event.key === 'Enter') {
-                        const input = event.target.value.toUpperCase().split("").filter(i =>!i.match(/\s+/));
+                        const input = event.target.value.toUpperCase().split("").filter(i => !i.match(/\s+/));
                         appendToConsole(`<span class="player-input">${event.target.value}</span>`, "player-input"); // Append player input
                         event.target.value = ''; // Clear input
 
