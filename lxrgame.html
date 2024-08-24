@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Game Console</title>
     <style>
+        :root{
+            color-scheme: dark;
+        }
+
         body {
             font-family: monospace;
             background-color: #333;
@@ -150,23 +154,156 @@
             text-align: center;
             color: #0ff;
         }
+
+        #dialog{
+            color: white;
+            background-color: #555;
+        }
+        table th, td{
+            border: 1px solid white;
+            padding: 4px;
+        }
     </style>
 
 
 </head>
 
 <body>
+    <dialog id="dialog">
+        <form method="dialog">
+            <button>Hide</button>
+        </form>
+        <div id="rules">
+            <p> This is a card game featured in Voyage Catventure
+                &lt; x &gt; </p>
+            <h1 id="the-cards">The cards</h1>
+            <p>The game is simple there&#39;s three types of card.</p>
+            <ul>
+                <li><strong>&lt;</strong> Left</li>
+                <li><strong>&gt;</strong> Right</li>
+                <li><strong>X</strong> Wrong</li>
+            </ul>
+            <p>A minimal two player deck consists of 12 left, 12 right, and 12 wrong cards.
+                Decks may be combined for a greater number of players.</p>
+            <h2 id="setup">Setup</h2>
+            <ul>
+                <li>each player gets dealt 5 cards</li>
+                <li>two cards get laid in the middle</li>
+                <li>each player discards one card</li>
+                <li>one more card from the deck gets put in the middle<h2 id="goal">Goal</h2>
+                </li>
+            </ul>
+            <p>The goal is to to combine a hand with the cards in the middle to achieve the most points in the round. The
+                player must create an arrangement by placing their cards in-between the open cards.
+                The card arrangement will always contain 7 total cards ( 4 from the player&#39;s hand and the 3 that were
+                opened in the beginning of the round) </p>
+            <h2 id="rules">Rules</h2>
+            <ol>
+                <li>The cards of the middle cannot be reordered.</li>
+                <li>Cards are worth points based on their position on the arrangement as per the Table of points below</li>
+                <li>Preferred number of rounds is 5</li>
+            </ol>
+            <h2 id="table-of-points">Table of points</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>what</th>
+                        <th>where</th>
+                        <th>worth</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&lt;</td>
+                        <td>leftmost</td>
+                        <td>5pts</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;</td>
+                        <td><em>chained</em> to leftmost</td>
+                        <td>2pts</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;</td>
+                        <td>elsewhere</td>
+                        <td>1pt</td>
+                    </tr>
+                    <tr>
+                        <td>&gt;</td>
+                        <td>rightmost</td>
+                        <td>5pts</td>
+                    </tr>
+                    <tr>
+                        <td>&gt;</td>
+                        <td><em>chained</em> to rightmost</td>
+                        <td>3pts</td>
+                    </tr>
+                    <tr>
+                        <td>&gt;</td>
+                        <td>elsewhere</td>
+                        <td>1pt</td>
+                    </tr>
+                    <tr>
+                        <td>X</td>
+                        <td>next to X</td>
+                        <td>makes a &gt;</td>
+                    </tr>
+                    <tr>
+                        <td>X</td>
+                        <td>elsewhere</td>
+                        <td>0pts</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Best possible arrangement has a 25 pts and is called a <strong><em>Booty</em></strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>pos0</th>
+                        <th>pos1</th>
+                        <th>pos2</th>
+                        <th>pos3</th>
+                        <th>pos4</th>
+                        <th>pos5</th>
+                        <th>pos6</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&lt;</td>
+                        <td>&gt;</td>
+                        <td>&gt;</td>
+                        <td>&gt;</td>
+                        <td>&gt;</td>
+                        <td>&gt;</td>
+                        <td>&gt;</td>
+                    </tr>
+                    <tr>
+                        <td>5pts</td>
+                        <td>3pts</td>
+                        <td>3pts</td>
+                        <td>3pts</td>
+                        <td>3pts</td>
+                        <td>3pts</td>
+                        <td>5pts</td>
+                    </tr>
+                </tbody>
+            </table>
+    
+        </div>
+    </dialog>
     <div id="left">
         <div id="console"></div>
         <input type="text" id="input" autofocus placeholder="Type your command here...">
     </div>
     <div id="right">
+        <div><button id="rules-button">Rules</button></div>
         <div class="visual">
-            <div id="hand" class="hand">
-                <div class="card-row" id="hand-cards"></div>
-            </div>
             <div id="middle" class="middle">
                 <div class="card-row" id="middle-cards"></div>
+            </div>
+            <div id="hand" class="hand">
+                <div class="card-row" id="hand-cards"></div>
             </div>
             <div id="arrangement" class="arrangement">
                 <div class="card-row" id="arrangement-cards"></div>
@@ -470,6 +607,8 @@
 
         // Start the game
         main();
+
+        document.getElementById("rules-button").addEventListener("click",()=>document.getElementById('dialog').show())
     </script>
 </body>
 
