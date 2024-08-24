@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game Console</title>
+    <style>
+        body {
+            font-family: monospace;
+            background-color: #333;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+        }
+
+        #console {
+            height: 80vh;
+            overflow-y: scroll;
+            padding: 10px;
+            border: 1px solid #666;
+            background-color: #222;
+        }
+
+        #input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #444;
+            color: #eee;
+            font-size: 1em;
+        }
+
+        .player-input {
+            color: rgb(169, 230, 28);
+            /* Green color */
+        }
+
+        .info {
+            color: #0ff;
+            /* Cyan color */
+        }
+
+        .error {
+            color: #f00;
+            /* Red color */
+        }
+
+        .success {
+            color: #0f0;
+            /* Green color */
+        }
+
+        .computer {
+            color: #f0f;
+            /* Magenta color */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="console"></div>
+    <input type="text" id="input" autofocus placeholder="Type your command here...">
+    <script>
+        // Define card types and point values
+        const LEFT = '<';
+        const RIGHT = '>';
+        const WRONG = 'X';
+
+        const CARD_TYPES = [LEFT, RIGHT, WRONG];
+        const POINTS = {
+            '<leftmost': 5,
+            '<chained': 2,
+            '<elsewhere': 1,
+            '>rightmost': 5,
+            '>chained': 3,
+            '>elsewhere': 1
+        };
+
+        // Deck creation and shuffling
+        function createDeck() {
+            return Array(12).fill(LEFT).concat(Array(12).fill(RIGHT)).concat(Array(12).fill(WRONG));
+        }
+
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        // Deal cards to players
+        function dealCards(deck, numCards = 5) {
+            return Array.from({ length: numCards }, () => deck.pop());
+        }
+
+        // Print the cards in hand and in the middle
+        function printGameState(playerHand, middleCards) {
+            appendToConsole(`Your hand: <span class="info">${playerHand.join(' ')}</span>`);
+            appendToConsole(`Middle cards: <span class="info">${middleCards.join(' ')}</span>`);
+        }
+
+        // Function to evaluate the score
+        function calculateScore(arrangement) {
+            arrangement = twoWrongsMakeARight(arrangement);
+            appendToConsole(`<span>------------------------</span>`);
+            let score = 0;
+            let breakdown = [];
+            arrangement.forEach((card, idx) => {
+                let points = 0;
+                if (card === LEFT) {
+                    if (idx === 0) {
+                        points = POINTS['<leftmost'];
+                    } else if (arrangement[idx - 1] === LEFT) {
+                        points = POINTS['<chained'];
+                    } else {
+                        points = POINTS['<elsewhere'];
+                    }
+                } else if (card === RIGHT) {
+                    if (idx === arrangement.length - 1) {
+                        points = POINTS['>rightmost'];
+                    } else if (arrangement[idx + 1] === RIGHT) {
+                        points = POINTS['>chained'];
+                    } else {
+                        points = POINTS['>elsewhere'];
+                    }
+                } else {
+                    points = 0;
+                }
+                score += points;
+                breakdown.push(points);
+            });
+
+            appendToConsole(`&nbspCards: <span class="info">${arrangement.join(' ')}</span>`);
+            appendToConsole(`Points: <span class="info">${breakdown.join(' ')}</span>`);
+            return score;
+        }
+
+        function twoWrongsMakeARight(arrangement) {
+            const newArrangement = [];
+            for (let i = 0; i < arrangement.length; i++) {
+                const card = arrangement[i];
+                if (card === WRONG) {
+                    if ((i === 0 && arrangement[i + 1] === WRONG) ||
+                        (i < arrangement.length - 1 && arrangement[i + 1] === WRONG)) {
+                        newArrangement.push(RIGHT);
+                    } else{
+                        newArrangement.push(WRONG)
+                    }
+                } else {
+                    newArrangement.push(card);
+                }
+            }
+            // if (newArrangement.length != arrangement.length) {
+            //     appendToConsole(`Made a right: <span class="info">${newArrangement.join(' ')}</span>`);
+            // }
+            return newArrangement;
+        }
+
+        function isValidArrangement(arrangement, hand, middleCards) {
+            const availableCards = middleCards.concat(hand);
+            return (arrangement.length === 7 &&
+                arrangement.every(card => availableCards.includes(card)) &&
+                arrangement.toSorted().join('') === availableCards.toSorted().join(''));
+        }
+
+        function getPlayerArrangement(playerHand, middleCards) {
+            return new Promise((resolve) => {
+                appendToConsole("Enter your arrangement of 7 cards (e.g., '< < X > > <'):", "info");
+                document.getElementById('input').addEventListener('keydown', function handleEnter(event) {
+                    if (event.key === 'Enter') {
+                        const input = event.target.value.toUpperCase().split("").filter(i =>!i.match(/\s+/));
+                        appendToConsole(`<span class="player-input">${event.target.value}</span>`, "player-input"); // Append player input
+                        event.target.value = ''; // Clear input
+
+                        if (!isValidArrangement(input, playerHand, middleCards)) {
+                            appendToConsole("Invalid arrangement. Try again.", "error");
+                            return;
+                        }
+
+                        let cursorIdx = 0;
+                        console.log(input)
+                        for (const card of middleCards) {
+                            console.log('checking card', card)
+                            if (!input.slice(cursorIdx).includes(card)) {
+                                appendToConsole("Invalid arrangement. Order of middle cards was not preserved!", "error");
+                                console.log('did not find ', card, ' in', input.slice(cursorIdx))
+                                return;
+                            }
+                            cursorIdx = input.indexOf(card, cursorIdx);
+                        }
+                        document.getElementById('input').removeEventListener('keydown', handleEnter);
+                        resolve(input);
+                    }
+                });
+            });
+        }
+
+        // Game setup
+        function setupGame() {
+            const deck = shuffleDeck(createDeck());
+            const playerHand = dealCards(deck);
+            const middleCards = [deck.pop(), deck.pop()];
+            return { deck, playerHand, middleCards };
+        }
+
+        // Simulate a round of play
+        async function playRound(playerHand, middleCards, deck) {
+            printGameState(playerHand, middleCards);
+
+            // Player discards one card
+            appendToConsole("Discard one card from your hand:", "info");
+            const discard = await new Promise((resolve) => {
+                document.getElementById('input').addEventListener('keydown', function handleEnter(event) {
+                    if (event.key === 'Enter') {
+                        const card = event.target.value.toUpperCase();
+                        appendToConsole(`<span class="player-input">${event.target.value}</span>`, "player-input"); // Append player input
+                        event.target.value = ''; // Clear input
+
+                        if (!playerHand.includes(card)) {
+                            appendToConsole("Invalid card. Try again.", "error");
+                            return;
+                        }
+                        playerHand.splice(playerHand.indexOf(card), 1);
+                        document.getElementById('input').removeEventListener('keydown', handleEnter);
+                        resolve(card);
+                    }
+                });
+            });
+
+            // Place an additional card in the middle
+            middleCards.push(deck.pop());
+
+            printGameState(playerHand, middleCards);
+
+            // Get player arrangement
+            const playerArrangement = await getPlayerArrangement(playerHand, middleCards);
+
+            // Compute score
+            const score = calculateScore(playerArrangement);
+            appendToConsole(`Your score: <span class="success">${score}</span>`, "success");
+
+            // Dummy computer move for simplicity
+            const computerArrangement = middleCards.concat(Array(3).fill(LEFT));
+            const computerScore = calculateScore(computerArrangement);
+            appendToConsole(`Computer score: <span class="computer">${computerScore}</span>`, "computer");
+
+            return { playerScore: score, computerScore };
+        }
+
+        // Main game loop
+        async function main() {
+            const numRounds = 5;
+            let totalPlayerScore = 0;
+            let totalComputerScore = 0;
+
+            for (let roundNum = 0; roundNum < numRounds; roundNum++) {
+                appendToConsole(`Round ${roundNum + 1}`, "info");
+                const { deck, playerHand, middleCards } = setupGame();
+                const { playerScore, computerScore } = await playRound(playerHand, middleCards, deck);
+                totalPlayerScore += playerScore;
+                totalComputerScore += computerScore;
+            }
+
+            appendToConsole(`Final Scores: Player <span class="success">${totalPlayerScore}</span>, Computer <span class="computer">${totalComputerScore}</span>`, "info");
+            if (totalPlayerScore > totalComputerScore) {
+                appendToConsole("You win!", "success");
+            } else if (totalPlayerScore < totalComputerScore) {
+                appendToConsole("Computer wins!", "error");
+            } else {
+                appendToConsole("It's a tie!", "info");
+            }
+        }
+
+        function appendToConsole(message, className = "") {
+            const consoleDiv = document.getElementById('console');
+            const p = document.createElement('p');
+            p.className = className;
+            p.innerHTML = message;
+            consoleDiv.appendChild(p);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight; // Scroll to bottom
+        }
+
+        // Start the game
+        main();
+    </script>
+</body>
+
+</html>
