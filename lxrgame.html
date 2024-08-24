@@ -6,25 +6,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Game Console</title>
     <style>
-        :root{
-            color-scheme: dark;
-        }
         body {
             font-family: monospace;
             background-color: #333;
             color: #eee;
             margin: 0;
             padding: 0;
-            overflow-x: hidden; /* Prevent horizontal scrollbar */
+            overflow-x: hidden;
+            /* Prevent horizontal scrollbar */
+            display: flex;
+        }
+
+        #left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 400px;
+            /* Adjust the width of the left section */
+        }
+
+        #right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #444;
+            padding: 20px;
+            color: #eee;
+            box-sizing: border-box;
         }
 
         #console {
-            height: 80vh;
+            flex: 1;
             overflow-y: scroll;
             padding: 10px;
             border: 1px solid #666;
             background-color: #222;
-            box-sizing: border-box; /* Ensure padding and border are included in the width and height */
+            box-sizing: border-box;
+
+            /* WebKit scrollbar styling */
+            scrollbar-color: #555 #333;
+            /* Firefox scrollbar color */
+            scrollbar-width: thin;
+            /* Firefox scrollbar width */
+        }
+
+        #console::-webkit-scrollbar {
+            width: 12px;
+            /* Width of the scrollbar */
+        }
+
+        #console::-webkit-scrollbar-track {
+            background: #333;
+            /* Background color of the track */
+        }
+
+        #console::-webkit-scrollbar-thumb {
+            background: #555;
+            /* Color of the draggable part of the scrollbar */
+            border-radius: 6px;
+            /* Rounded corners for the scrollbar thumb */
+        }
+
+        #console::-webkit-scrollbar-thumb:hover {
+            background: #777;
+            /* Color when hovering over the scrollbar thumb */
         }
 
         #input {
@@ -34,39 +81,105 @@
             background-color: #444;
             color: #eee;
             font-size: 1em;
-            box-sizing: border-box; /* Ensure padding is included in the width */
+            box-sizing: border-box;
         }
 
         .player-input {
             color: rgb(169, 230, 28);
-            /* Green color */
         }
 
         .info {
             color: #0ff;
-            /* Cyan color */
         }
 
         .error {
             color: #f00;
-            /* Red color */
         }
 
         .success {
             color: #0f0;
-            /* Green color */
         }
 
         .computer {
             color: #f0f;
-            /* Magenta color */
+        }
+
+        .visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            width: 40px;
+            height: 60px;
+            background-color: #222;
+            color: #eee;
+            text-align: center;
+            line-height: 60px;
+            border: 1px solid #666;
+            box-sizing: border-box;
+        }
+
+        .hand,
+        .middle,
+        .arrangement {
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        .next-round {
+            font-size: 1.5em;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .total-score {
+            font-size: 1.2em;
+            margin-top: 20px;
+            text-align: center;
+            color: #0ff;
         }
     </style>
+
+
 </head>
 
 <body>
-    <div id="console"></div>
-    <input type="text" id="input" autofocus placeholder="Type your command here...">
+    <div id="left">
+        <div id="console"></div>
+        <input type="text" id="input" autofocus placeholder="Type your command here...">
+    </div>
+    <div id="right">
+        <div class="visual">
+            <div id="hand" class="hand">
+                <div class="card-row" id="hand-cards"></div>
+            </div>
+            <div id="middle" class="middle">
+                <div class="card-row" id="middle-cards"></div>
+            </div>
+            <div id="arrangement" class="arrangement">
+                <div class="card-row" id="arrangement-cards"></div>
+            </div>
+            <div id="score" class="score">
+                <span id="player-score">Your Round Score: 0</span><br>
+                <span id="computer-score">Computer Round Score: 0</span><br>
+                <span id="player-total-score" class="info">Your Total Score: 0</span><br>
+                <span id="computer-total-score" class="computer">Computer Total Score: 0</span>
+            </div>
+            <div id="next-round" class="next-round"></div>
+        </div>
+    </div>
     <script>
         // Define card types and point values
         const LEFT = '<';
@@ -183,18 +296,72 @@
                         }
 
                         let cursorIdx = 0;
-                        console.log(input)
                         for (const card of middleCards) {
-                            console.log('checking card', card)
                             if (!input.slice(cursorIdx).includes(card)) {
                                 appendToConsole("Invalid arrangement. Order of middle cards was not preserved!", "error");
-                                console.log('did not find ', card, ' in', input.slice(cursorIdx))
                                 return;
                             }
                             cursorIdx = input.indexOf(card, cursorIdx);
                         }
                         document.getElementById('input').removeEventListener('keydown', handleEnter);
                         resolve(input);
+                    }
+                });
+            });
+        }
+
+        function updateVisuals(playerHand, middleCards, playerArrangement, playerScore, computerScore) {
+            // Update the right side with visual representations
+            const handCards = document.getElementById('hand-cards');
+            const middleCardsElem = document.getElementById('middle-cards');
+            const arrangementCards = document.getElementById('arrangement-cards');
+            const playerScoreElem = document.getElementById('player-score');
+            const computerScoreElem = document.getElementById('computer-score');
+
+            // Clear previous visuals
+            handCards.innerHTML = '';
+            middleCardsElem.innerHTML = '';
+            arrangementCards.innerHTML = '';
+
+            // Display player hand
+            playerHand.forEach(card => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.textContent = card;
+                handCards.appendChild(div);
+            });
+
+            // Display middle cards
+            middleCards.forEach(card => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.textContent = card;
+                middleCardsElem.appendChild(div);
+            });
+
+            // Display player arrangement
+            playerArrangement.forEach(card => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.textContent = card;
+                arrangementCards.appendChild(div);
+            });
+
+            // Update scores
+            playerScoreElem.textContent = `Your Round Score: ${playerScore}`;
+            computerScoreElem.textContent = `Computer Round Score: ${computerScore}`;
+        }
+
+        function promptNextRound() {
+            return new Promise((resolve) => {
+                const nextRoundElem = document.getElementById('next-round');
+                nextRoundElem.textContent = 'Type anything and press Enter to start the next round...';
+
+                document.getElementById('input').addEventListener('keydown', function handleStartRound(event) {
+                    if (event.key === 'Enter') {
+                        nextRoundElem.textContent = '';
+                        document.getElementById('input').removeEventListener('keydown', handleStartRound);
+                        resolve();
                     }
                 });
             });
@@ -211,6 +378,9 @@
         // Simulate a round of play
         async function playRound(playerHand, middleCards, deck) {
             printGameState(playerHand, middleCards);
+
+            // Initialize visuals
+            updateVisuals(playerHand, middleCards, [], 0, 0);
 
             // Player discards one card
             appendToConsole("Discard one card from your hand:", "info");
@@ -237,19 +407,24 @@
 
             printGameState(playerHand, middleCards);
 
+            // Initialize visuals with updated game state
+            updateVisuals(playerHand, middleCards, [], 0, 0);
+
             // Get player arrangement
             const playerArrangement = await getPlayerArrangement(playerHand, middleCards);
 
-            // Compute score
-            const score = calculateScore(playerArrangement);
-            appendToConsole(`Your score: <span class="success">${score}</span>`, "success");
-
-            // Dummy computer move for simplicity
+            // Compute scores
+            const playerScore = calculateScore(playerArrangement);
             const computerArrangement = middleCards.concat(Array(3).fill(LEFT));
             const computerScore = calculateScore(computerArrangement);
+
+            // Update visuals with final arrangement and scores
+            updateVisuals(playerHand, middleCards, playerArrangement, playerScore, computerScore);
+
+            appendToConsole(`Your score: <span class="success">${playerScore}</span>`, "success");
             appendToConsole(`Computer score: <span class="computer">${computerScore}</span>`, "computer");
 
-            return { playerScore: score, computerScore };
+            return { playerScore, computerScore };
         }
 
         // Main game loop
@@ -264,6 +439,14 @@
                 const { playerScore, computerScore } = await playRound(playerHand, middleCards, deck);
                 totalPlayerScore += playerScore;
                 totalComputerScore += computerScore;
+
+                const playerTotalScoreElem = document.getElementById('player-total-score');
+                const computerTotalScoreElem = document.getElementById('computer-total-score');
+                playerTotalScoreElem.textContent = `Your Total Score: ${totalPlayerScore}`;
+                playerTotalScoreElem.textContent = `Your Total Score: ${totalComputerScore}`;
+
+                // Prompt the player to start the next round
+                await promptNextRound();
             }
 
             appendToConsole(`Final Scores: Player <span class="success">${totalPlayerScore}</span>, Computer <span class="computer">${totalComputerScore}</span>`, "info");
