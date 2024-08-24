@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Game Console</title>
     <style>
-        :root{
+        :root {
             color-scheme: dark;
         }
 
@@ -108,6 +108,10 @@
             color: #f0f;
         }
 
+        .round {
+           color: rgb(255, 168, 136);
+        }
+
         .visual {
             display: flex;
             flex-direction: column;
@@ -155,11 +159,13 @@
             color: #0ff;
         }
 
-        #dialog{
+        #dialog {
             color: white;
-            background-color: #555;
+            background-color: #463131;
         }
-        table th, td{
+
+        table th,
+        td {
             border: 1px solid white;
             padding: 4px;
         }
@@ -193,14 +199,17 @@
                 <li>one more card from the deck gets put in the middle<h2 id="goal">Goal</h2>
                 </li>
             </ul>
-            <p>The goal is to to combine a hand with the cards in the middle to achieve the most points in the round. The
+            <p>The goal is to to combine a hand with the cards in the middle to achieve the most points in the round.
+                The
                 player must create an arrangement by placing their cards in-between the open cards.
-                The card arrangement will always contain 7 total cards ( 4 from the player&#39;s hand and the 3 that were
+                The card arrangement will always contain 7 total cards ( 4 from the player&#39;s hand and the 3 that
+                were
                 opened in the beginning of the round) </p>
             <h2 id="rules">Rules</h2>
             <ol>
                 <li>The cards of the middle cannot be reordered.</li>
-                <li>Cards are worth points based on their position on the arrangement as per the Table of points below</li>
+                <li>Cards are worth points based on their position on the arrangement as per the Table of points below
+                </li>
                 <li>Preferred number of rounds is 5</li>
             </ol>
             <h2 id="table-of-points">Table of points</h2>
@@ -289,7 +298,7 @@
                     </tr>
                 </tbody>
             </table>
-    
+
         </div>
     </dialog>
     <div id="left">
@@ -360,7 +369,6 @@
         // Function to evaluate the score
         function calculateScore(arrangement) {
             arrangement = twoWrongsMakeARight(arrangement);
-            appendToConsole(`<span>------------------------</span>`);
             let score = 0;
             let breakdown = [];
             arrangement.forEach((card, idx) => {
@@ -423,11 +431,14 @@
                 appendToConsole("Enter your arrangement of 7 cards (e.g., '< < X > > <'):", "info");
                 document.getElementById('input').addEventListener('keydown', function handleEnter(event) {
                     if (event.key === 'Enter') {
-                        const input = event.target.value.toUpperCase().split("").filter(i => !i.match(/\s+/));
+                        const input = event.target.value
+                            .toUpperCase().replaceAll(/R/g, ">").replaceAll(/L/g, "<")
+                            .split("").filter(i => !i.match(/\s+/));
                         appendToConsole(`<span class="player-input">${event.target.value}</span>`, "player-input"); // Append player input
                         event.target.value = ''; // Clear input
 
                         if (!isValidArrangement(input, playerHand, middleCards)) {
+                            console.log(input)
                             appendToConsole("Invalid arrangement. Try again.", "error");
                             return;
                         }
@@ -492,7 +503,7 @@
         function promptNextRound() {
             return new Promise((resolve) => {
                 const nextRoundElem = document.getElementById('next-round');
-                nextRoundElem.textContent = 'Type anything and press Enter to start the next round...';
+                nextRoundElem.textContent = 'Press Enter to start the next round...';
 
                 document.getElementById('input').addEventListener('keydown', function handleStartRound(event) {
                     if (event.key === 'Enter') {
@@ -504,27 +515,40 @@
             });
         }
 
-        // Game setup
-        function setupGame() {
-            const deck = shuffleDeck(createDeck());
-            const playerHand = dealCards(deck);
-            const middleCards = [deck.pop(), deck.pop()];
-            return { deck, playerHand, middleCards };
+        // Computer strategy for discarding a card
+        function computerDiscardStrategy(hand) {
+            // Simple strategy: discard the card with the lowest potential score
+            // More advanced strategies can be added based on the game's requirements
+            const cardScores = {
+                [LEFT]: 0, // Arbitrary score, as placeholder
+                [RIGHT]: 2, // Arbitrary score, as placeholder
+                [WRONG]: 1 // WRONG is considered as lowest utility
+            };
+            return hand.reduce((lowest, card) => cardScores[card] < cardScores[lowest] ? card : lowest, hand[0]);
+        }
+
+        // Computer strategy for arranging cards
+        function computerArrangementStrategy(hand, middleCards) {
+            // Simple strategy: just arrange all LEFTs at the start, RIGHTs at the end
+            const allCards = middleCards.concat(hand);
+            return allCards.sort((a, b) => a === LEFT ? -1 : a === RIGHT ? 1 : 0);
         }
 
         // Simulate a round of play
-        async function playRound(playerHand, middleCards, deck) {
+        async function playRound(playerHand, computerHand, middleCards, deck) {
             printGameState(playerHand, middleCards);
 
             // Initialize visuals
             updateVisuals(playerHand, middleCards, [], 0, 0);
+            
 
             // Player discards one card
             appendToConsole("Discard one card from your hand:", "info");
             const discard = await new Promise((resolve) => {
                 document.getElementById('input').addEventListener('keydown', function handleEnter(event) {
                     if (event.key === 'Enter') {
-                        const card = event.target.value.toUpperCase();
+                        const card = event.target.value.toUpperCase()
+                            .replace("R", ">").replace("L", "<");
                         appendToConsole(`<span class="player-input">${event.target.value}</span>`, "player-input"); // Append player input
                         event.target.value = ''; // Clear input
 
@@ -539,6 +563,12 @@
                 });
             });
 
+            console.log(computerHand)
+            const computerDiscard = computerDiscardStrategy(computerHand);
+            console.log('he discarded', computerDiscard)
+            computerHand.splice(computerHand.indexOf(computerDiscard), 1);
+            console.log('left with', computerHand)
+
             // Place an additional card in the middle
             middleCards.push(deck.pop());
 
@@ -550,9 +580,16 @@
             // Get player arrangement
             const playerArrangement = await getPlayerArrangement(playerHand, middleCards);
 
+            // Computer's turn
+            const computerArrangement = computerArrangementStrategy(computerHand, middleCards);
+
             // Compute scores
+
+            appendToConsole("_________________")
+            appendToConsole(`You play:`);
             const playerScore = calculateScore(playerArrangement);
-            const computerArrangement = middleCards.concat(Array(3).fill(LEFT));
+            appendToConsole("_________________")
+            appendToConsole(`Computer plays:`);
             const computerScore = calculateScore(computerArrangement);
 
             // Update visuals with final arrangement and scores
@@ -564,23 +601,35 @@
             return { playerScore, computerScore };
         }
 
+        // Game setup
+        function setupGame() {
+            const deck = shuffleDeck(createDeck());
+            const playerHand = dealCards(deck);
+            const middleCards = [deck.pop(), deck.pop()];
+            const computerHand = dealCards(deck);
+            return { deck, playerHand, computerHand, middleCards };
+        }
+
         // Main game loop
         async function main() {
+            appendToConsole("Welcome to 2WMAR. Click Rules to learn how the game works ------------------------------------------>","info")
+            appendToConsole("Pro tip: You can use l or L for < and r or R for >","info")
+            appendToConsole("Have fun :)","info")
             const numRounds = 5;
             let totalPlayerScore = 0;
             let totalComputerScore = 0;
 
             for (let roundNum = 0; roundNum < numRounds; roundNum++) {
-                appendToConsole(`Round ${roundNum + 1}`, "info");
-                const { deck, playerHand, middleCards } = setupGame();
-                const { playerScore, computerScore } = await playRound(playerHand, middleCards, deck);
+                appendToConsole(`︵‿︵‿< < ROUND ${roundNum + 1} > >‿︵‿︵`, "round");
+                const { deck, playerHand, computerHand, middleCards } = setupGame();
+                const { playerScore, computerScore } = await playRound(playerHand, computerHand, middleCards, deck);
                 totalPlayerScore += playerScore;
                 totalComputerScore += computerScore;
 
                 const playerTotalScoreElem = document.getElementById('player-total-score');
                 const computerTotalScoreElem = document.getElementById('computer-total-score');
                 playerTotalScoreElem.textContent = `Your Total Score: ${totalPlayerScore}`;
-                playerTotalScoreElem.textContent = `Your Total Score: ${totalComputerScore}`;
+                computerTotalScoreElem.textContent = `Computer Total Score: ${totalComputerScore}`;
 
                 // Prompt the player to start the next round
                 await promptNextRound();
@@ -608,7 +657,7 @@
         // Start the game
         main();
 
-        document.getElementById("rules-button").addEventListener("click",()=>document.getElementById('dialog').show())
+        document.getElementById("rules-button").addEventListener("click", () => document.getElementById('dialog').show())
     </script>
 </body>
 
