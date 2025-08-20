@@ -58,7 +58,6 @@
                 font-size: larger;
             }
         }
-
     </style>
 </head>
 
@@ -107,6 +106,43 @@
     <a href="#ch09"><button>9</button></a>
     <a href="#ch10"><button>10</button></a>
     ~
+</div>
+
+<div id="sub">
+
+    <form id="email-form" action="https://formspree.io/f/mzzvlywg" method="POST">
+        Tët kallxoj kur t'dale kapitull i ri?
+        <input type="text" name="email" placeholder="shkruje emailin" required
+            oninvalid="this.setCustomValidity('shkruje si njer')" oninput="this.setCustomValidity('')">
+        <button type="submit">Kallxom</button>
+        <span id="success-message" style="display: none;"> U tha, u bo 👍</span>
+    </form>
+
+    <script>
+        const form = document.getElementById('email-form');
+        const successMessage = document.getElementById('success-message');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            fetch('https://formspree.io/f/mzzvlywg', {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            }).then(response => {
+                if (response.ok) {
+                    form.reset();
+                    successMessage.style.display = 'inline';
+                } else {
+                    alert('Error ' + response.status + ': Thuma emailin nvesh kur tshajfna.');
+                }
+            }).catch(error => {
+                alert('Error: ' + error.message);
+            });
+        });
+    </script>
 </div>
 
 <body>
