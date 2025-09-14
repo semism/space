@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sq">
 
 <head>
     <meta charset="UTF-8">
@@ -55,10 +55,8 @@
             font-weight: bolder;
             border-top-right-radius: 4px;
         }
-       .button:hover {
-            background-color: #9F8C76; 
-            border-bottom: 2px solid gray;
-            border-left: 2px solid gray;
+        button:hover {
+            background-color: aquamarine;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -94,17 +92,29 @@
         });
     </script>
 
-    <button id="darkModeToggle">bon kall fajk 💡</button>
+    <button id="darkModeToggle">bonu maler 🎨</button>
     <script>
+            
+        const themes = {
+          0: { background: '#fdf6e3', color: '#333' },
+          1: { background: '#f4ecd8', color: '#5b4636' },
+          2: { background: '#e0e0e0', color: '#222' },
+          3: { background: '#1e1e1e', color: '#eee' }
+        };
         const button = document.getElementById('darkModeToggle');
         let darkMode = false;
+        let themeId = -1;
 
         button.addEventListener('click', () => {
             darkMode = !darkMode;
+            themeId++;
+            if(themeId == 4) themeId = 0;
             const root = document.querySelector(':root');
 
             // set css variable
-            root.style.setProperty('color-scheme', darkMode ? 'light' : 'dark');
+            root.style.setProperty('color', themes[themeId].color);
+            root.style.setProperty('background', themes[themeId].background);
+            //root.style.setProperty('color-scheme', darkMode ? 'light' : 'dark');
         });
     </script>      
     <a href="haris_potri.epub" download="haris_potri.epub"><button>vidhe (.epub)</button></a>
@@ -166,11 +176,13 @@
 
 <body>
 
+
     <h1>
         Haris Potri
     </h1>
     <p>
-        ni gjal i vëjl jetajm ngurbet, ni dit e kupton se o pak ma i veçant se jetajmt qer.
+        Ni gjal i vëjl jetajm n'gurbet, ni dit e kupton se o pak ma i veçant se jetajmt qer.
+        Shtrigat e ditës, dhampirat e natës, veç disa nga historitë e Hogvorcës.
     </p>
     <h1 id="ch01"><span style="color: rgb(71, 202, 255);">Kapitulli i parë</span></h1>
     <h3 class="ql-align-center"><strong>Kishte ondrra Harisi</strong></h3>
